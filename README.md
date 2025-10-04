@@ -1,238 +1,499 @@
-# 🤖 Chat Agent Starter Kit
+# 🏖️ Vacation Planning Agent
 
 ![npm i agents command](./npm-agents-banner.svg)
 
 <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/agents-starter"><img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare"/></a>
 
-A starter template for building AI-powered chat agents using Cloudflare's Agent platform, powered by [`agents`](https://www.npmjs.com/package/agents). This project provides a foundation for creating interactive chat experiences with AI, complete with a modern UI and tool integration capabilities.
+An AI-powered vacation planning agent that coordinates between three specialized workers to help users plan complete trips. Built with Cloudflare's Agent platform and powered by [`agents`](https://www.npmjs.com/package/agents), this agent searches for hotels, flights, and activities using real-time web scraping via Browserbase MCP.
 
-## Features
+## ✨ Features
 
-- 💬 Interactive chat interface with AI
-- 🛠️ Built-in tool system with human-in-the-loop confirmation
-- 📅 Advanced task scheduling (one-time, delayed, and recurring via cron)
-- 🌓 Dark/Light theme support
-- ⚡️ Real-time streaming responses
-- 🔄 State management and chat history
-- 🎨 Modern, responsive UI
+- 🏨 **Hotel Search**: Real-time hotel search from Booking.com, Expedia, Hotels.com
+- ✈️ **Flight Search**: Live flight data from Google Flights, Kayak, Expedia
+- 🎯 **Activity Discovery**: Find attractions and activities from Viator, GetYourGuide, TripAdvisor
+- 💰 **Budget Filtering**: All results respect your budget constraints
+- 🔄 **Smart Coordination**: Main agent orchestrates all three workers
+- 🌐 **Real Web Scraping**: Uses Browserbase MCP for live data from booking sites
+- 📱 **Modern UI**: Responsive chat interface with dark/light theme
+- ⚡️ **Real-time Streaming**: Live responses as the agent searches
+- 🛠️ **Tool Integration**: Human-in-the-loop confirmation for important actions
 
-## Prerequisites
+## 🚀 Quick Start
 
-- Cloudflare account
-- OpenAI API key
+### Prerequisites
 
-## Quick Start
+- **Cloudflare account** - [Sign up here](https://dash.cloudflare.com/sign-up)
+- **OpenAI API key** - [Get one here](https://platform.openai.com/api-keys)
+- **Browserbase account** (optional) - [Sign up here](https://browserbase.com) for real web scraping
 
-1. Create a new project:
+### Option 1: Deploy to Cloudflare (Recommended)
 
-```bash
-npx create-cloudflare@latest --template cloudflare/agents-starter
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/agents-starter)
+
+1. Click the deploy button above
+2. Connect your GitHub account
+3. Set your environment variables:
+   - `OPENAI_API_KEY`: Your OpenAI API key
+   - `BROWSERBASE_API_KEY`: (Optional) Your Browserbase API key
+   - `BROWSERBASE_PROJECT_ID`: (Optional) Your Browserbase project ID
+4. Deploy and start planning vacations!
+
+### Option 2: Run Locally
+
+1. **Clone and install**:
+
+   ```bash
+   git clone <your-repo-url>
+   cd cloudflare-agentic
+   npm install
+   ```
+
+2. **Set up environment**:
+   Create a `.dev.vars` file:
+
+   ```env
+   OPENAI_API_KEY=your_openai_api_key_here
+
+   # Optional: For real web scraping
+   BROWSERBASE_API_KEY=your_browserbase_api_key
+   BROWSERBASE_PROJECT_ID=your_browserbase_project_id
+   GEMINI_API_KEY=your_gemini_api_key
+   ```
+
+3. **Run locally**:
+
+   ```bash
+   npm start
+   ```
+
+   Open [http://localhost:5174](http://localhost:5174) in your browser
+
+4. **Deploy to production**:
+   ```bash
+   npm run deploy
+   ```
+
+## 🎯 How to Use
+
+### Basic Vacation Planning
+
+Simply ask the agent to plan your trip:
+
+```
+Plan a trip to Paris from March 15-20, 2024. I'm traveling with my spouse, budget is $3000 total, and we're interested in culture and food.
 ```
 
-2. Install dependencies:
+### Specific Searches
 
-```bash
-npm install
+Ask for specific components:
+
+```
+Find me hotels in Tokyo under $200/night with a pool
 ```
 
-3. Set up your environment:
-
-Create a `.dev.vars` file:
-
-```env
-OPENAI_API_KEY=your_openai_api_key
+```
+What flights are available from LAX to Tokyo on December 1st?
 ```
 
-4. Run locally:
-
-```bash
-npm start
+```
+What cultural activities can I do in Tokyo?
 ```
 
-5. Deploy:
+### Budget-Aware Planning
 
-```bash
-npm run deploy
+The agent respects your budget constraints:
+
+```
+Plan a budget trip to Barcelona for 4 days, maximum $500 total
 ```
 
-## Project Structure
+## 🏗️ Architecture
+
+### Three Specialized Workers
+
+1. **🏨 Hotel Worker** (`src/workers/hotel-worker.ts`)
+   - Searches Booking.com, Expedia, Hotels.com, Agoda
+   - Filters by price, amenities, location
+   - Returns booking links and ratings
+
+2. **✈️ Flight Worker** (`src/workers/flight-worker.ts`)
+   - Searches Google Flights, Kayak, Expedia, Skyscanner
+   - Filters by price, stops, airline, class
+   - Returns flight times and booking links
+
+3. **🎯 Activities Worker** (`src/workers/activities-worker.ts`)
+   - Searches Viator, GetYourGuide, TripAdvisor, Airbnb Experiences
+   - Filters by interests, price, duration
+   - Returns activity details and booking links
+
+### Main Agent Coordination
+
+The main agent (`src/server.ts`) orchestrates all three workers:
+
+- Understands user requirements
+- Coordinates searches across workers
+- Presents comprehensive vacation plans
+- Handles budget optimization
+
+## 🔧 Configuration
+
+### Environment Variables
+
+| Variable                 | Required | Description                            |
+| ------------------------ | -------- | -------------------------------------- |
+| `OPENAI_API_KEY`         | ✅       | Your OpenAI API key for AI responses   |
+| `BROWSERBASE_API_KEY`    | ❌       | For real web scraping (optional)       |
+| `BROWSERBASE_PROJECT_ID` | ❌       | Your Browserbase project ID (optional) |
+| `GEMINI_API_KEY`         | ❌       | For enhanced performance (optional)    |
+
+### MCP Configuration
+
+The agent uses Browserbase MCP for real web scraping. Configuration is in `src/mcp-config.ts`:
+
+```typescript
+export const BROWSERBASE_MCP_CONFIG = {
+  server: {
+    url: "https://server.smithery.ai/@browserbasehq/mcp-browserbase/mcp",
+    env: {
+      BROWSERBASE_API_KEY: process.env.BROWSERBASE_API_KEY,
+      BROWSERBASE_PROJECT_ID: process.env.BROWSERBASE_PROJECT_ID,
+      GEMINI_API_KEY: process.env.GEMINI_API_KEY
+    }
+  }
+};
+```
+
+## 📁 Project Structure
 
 ```
 ├── src/
-│   ├── app.tsx        # Chat UI implementation
-│   ├── server.ts      # Chat agent logic
-│   ├── tools.ts       # Tool definitions
-│   ├── utils.ts       # Helper functions
-│   └── styles.css     # UI styling
+│   ├── app.tsx                    # React chat UI
+│   ├── server.ts                  # Main vacation planning agent
+│   ├── tools.ts                   # Tool definitions and vacation planning
+│   ├── mcp-config.ts              # Browserbase MCP configuration
+│   ├── utils.ts                   # Helper functions
+│   ├── styles.css                 # UI styling
+│   └── workers/                   # Specialized workers
+│       ├── hotel-worker.ts        # Hotel search and booking
+│       ├── flight-worker.ts       # Flight search and booking
+│       └── activities-worker.ts   # Activities and attractions
+├── .dev.vars                      # Environment variables
+├── wrangler.jsonc                 # Cloudflare Workers configuration
+├── VACATION_PLANNING_README.md    # Detailed setup guide
+├── MCP_SETUP_GUIDE.md            # MCP configuration guide
+└── prompts.md                     # Development prompts used
 ```
 
-## Customization Guide
+## 🧪 Testing the Agent
+
+### Local Testing
+
+1. **Start the development server**:
+
+   ```bash
+   npm start
+   ```
+
+2. **Open your browser** to [http://localhost:5174](http://localhost:5174)
+
+3. **Try these example queries**:
+
+   **Complete vacation planning**:
+
+   ```
+   Plan a trip to Toronto from Ottawa, October 20-23, 2025. Budget is $1000 total, interested in culture and food.
+   ```
+
+   **Hotel search only**:
+
+   ```
+   Find me hotels in Paris under $300/night with a spa
+   ```
+
+   **Flight search only**:
+
+   ```
+   What flights are available from New York to London on December 15th?
+   ```
+
+   **Activities search only**:
+
+   ```
+   What outdoor activities can I do in Vancouver?
+   ```
+
+### Deployed Testing
+
+If you've deployed to Cloudflare:
+
+1. **Visit your deployed URL** (provided after deployment)
+2. **Test the same queries** as above
+3. **Check the console** for detailed logging of worker coordination
+
+### Expected Behavior
+
+- **With MCP**: Real web scraping from booking sites
+- **Without MCP**: Enhanced mock data with realistic delays
+- **All cases**: Budget filtering and comprehensive results
+
+## 🔍 Debugging
+
+### Console Logs
+
+The agent provides detailed logging:
+
+```
+🔍 Searching hotels with params: {...}
+✅ Hotel search completed, found 3 hotels
+🔍 Searching flights with params: {...}
+✅ Flight search completed, found 3 flights
+🔍 Searching activities with params: {...}
+✅ Activities search completed, found 4 activities
+```
+
+### Common Issues
+
+1. **"Technical issues" error**: Usually MCP connection problems - check Browserbase credentials
+2. **No results**: Check budget constraints - they might be too restrictive
+3. **Slow responses**: Normal with real web scraping - mock data is faster
+
+### MCP Troubleshooting
+
+If you want real web scraping:
+
+1. **Get Browserbase credentials** from [browserbase.com](https://browserbase.com)
+2. **Set up Smithery** at [smithery.ai](https://smithery.ai) for hosted MCP
+3. **Update `.dev.vars`** with your credentials
+4. **Restart the server** to pick up new environment variables
+
+## 🛠️ Customization Guide
+
+### Adding New Workers
+
+Create a new worker in `src/workers/`:
+
+```typescript
+// src/workers/restaurant-worker.ts
+import { tool, type ToolSet } from "ai";
+import { z } from "zod/v3";
+
+export class RestaurantWorker {
+  async searchRestaurants(
+    params: RestaurantSearchParams
+  ): Promise<RestaurantResult[]> {
+    // Your search logic here
+  }
+}
+
+export const searchRestaurantsTool = tool({
+  description: "Search for restaurants in a destination",
+  inputSchema: z.object({
+    destination: z.string(),
+    cuisine: z.string().optional(),
+    budget: z.object({ min: z.number(), max: z.number() }).optional()
+  }),
+  execute: async (params) => {
+    const worker = new RestaurantWorker();
+    const results = await worker.searchRestaurants(params);
+    return { success: true, restaurants: results };
+  }
+});
+
+export const restaurantTools = {
+  searchRestaurants: searchRestaurantsTool
+} satisfies ToolSet;
+```
+
+Then add to `src/server.ts`:
+
+```typescript
+import { restaurantTools } from "./workers/restaurant-worker";
+
+const allTools = {
+  ...tools,
+  ...hotelTools,
+  ...flightTools,
+  ...activitiesTools,
+  ...restaurantTools, // Add your new worker
+  ...this.mcp.getAITools()
+};
+```
 
 ### Adding New Tools
 
-Add new tools in `tools.ts` using the tool builder:
+Add tools in `src/tools.ts`:
 
-```ts
-// Example of a tool that requires confirmation
-const searchDatabase = tool({
-  description: "Search the database for user records",
-  parameters: z.object({
-    query: z.string(),
-    limit: z.number().optional()
+```typescript
+// Auto-executing tool
+const getWeather = tool({
+  description: "Get current weather for a location",
+  inputSchema: z.object({
+    location: z.string(),
+    units: z.enum(["celsius", "fahrenheit"]).optional()
+  }),
+  execute: async ({ location, units = "celsius" }) => {
+    // Your weather API call here
+    return `Weather in ${location}: 22°${units === "celsius" ? "C" : "F"}`;
+  }
+});
+
+// Confirmation-required tool
+const bookHotel = tool({
+  description: "Book a hotel room",
+  inputSchema: z.object({
+    hotelId: z.string(),
+    checkIn: z.string(),
+    checkOut: z.string(),
+    guests: z.number()
   })
   // No execute function = requires confirmation
 });
 
-// Example of an auto-executing tool
-const getCurrentTime = tool({
-  description: "Get current server time",
-  parameters: z.object({}),
-  execute: async () => new Date().toISOString()
-});
-
-// Scheduling tool implementation
-const scheduleTask = tool({
-  description:
-    "schedule a task to be executed at a later time. 'when' can be a date, a delay in seconds, or a cron pattern.",
-  parameters: z.object({
-    type: z.enum(["scheduled", "delayed", "cron"]),
-    when: z.union([z.number(), z.string()]),
-    payload: z.string()
-  }),
-  execute: async ({ type, when, payload }) => {
-    // ... see the implementation in tools.ts
-  }
-});
-```
-
-To handle tool confirmations, add execution functions to the `executions` object:
-
-```typescript
+// Add to executions object
 export const executions = {
-  searchDatabase: async ({
-    query,
-    limit
-  }: {
-    query: string;
-    limit?: number;
-  }) => {
-    // Implementation for when the tool is confirmed
-    const results = await db.search(query, limit);
-    return results;
+  bookHotel: async ({ hotelId, checkIn, checkOut, guests }) => {
+    // Your booking logic here
+    return `Hotel ${hotelId} booked for ${checkIn} to ${checkOut}`;
   }
-  // Add more execution handlers for other tools that require confirmation
 };
 ```
 
-Tools can be configured in two ways:
-
-1. With an `execute` function for automatic execution
-2. Without an `execute` function, requiring confirmation and using the `executions` object to handle the confirmed action. NOTE: The keys in `executions` should match `toolsRequiringConfirmation` in `app.tsx`.
-
-### Use a different AI model provider
-
-The starting [`server.ts`](https://github.com/cloudflare/agents-starter/blob/main/src/server.ts) implementation uses the [`ai-sdk`](https://sdk.vercel.ai/docs/introduction) and the [OpenAI provider](https://sdk.vercel.ai/providers/ai-sdk-providers/openai), but you can use any AI model provider by:
-
-1. Installing an alternative AI provider for the `ai-sdk`, such as the [`workers-ai-provider`](https://sdk.vercel.ai/providers/community-providers/cloudflare-workers-ai) or [`anthropic`](https://sdk.vercel.ai/providers/ai-sdk-providers/anthropic) provider:
-2. Replacing the AI SDK with the [OpenAI SDK](https://github.com/openai/openai-node)
-3. Using the Cloudflare [Workers AI + AI Gateway](https://developers.cloudflare.com/ai-gateway/providers/workersai/#workers-binding) binding API directly
-
-For example, to use the [`workers-ai-provider`](https://sdk.vercel.ai/providers/community-providers/cloudflare-workers-ai), install the package:
-
-```sh
-npm install workers-ai-provider
-```
-
-Add an `ai` binding to `wrangler.jsonc`:
-
-```jsonc
-// rest of file
-  "ai": {
-    "binding": "AI"
-  }
-// rest of file
-```
-
-Replace the `@ai-sdk/openai` import and usage with the `workers-ai-provider`:
-
-```diff
-// server.ts
-// Change the imports
-- import { openai } from "@ai-sdk/openai";
-+ import { createWorkersAI } from 'workers-ai-provider';
-
-// Create a Workers AI instance
-+ const workersai = createWorkersAI({ binding: env.AI });
-
-// Use it when calling the streamText method (or other methods)
-// from the ai-sdk
-- const model = openai("gpt-4o-2024-11-20");
-+ const model = workersai("@cf/deepseek-ai/deepseek-r1-distill-qwen-32b")
-```
-
-Commit your changes and then run the `agents-starter` as per the rest of this README.
-
 ### Modifying the UI
 
-The chat interface is built with React and can be customized in `app.tsx`:
+Customize the chat interface in `src/app.tsx`:
 
-- Modify the theme colors in `styles.css`
-- Add new UI components in the chat container
-- Customize message rendering and tool confirmation dialogs
-- Add new controls to the header
+- **Theme colors**: Edit `src/styles.css`
+- **Message rendering**: Modify the message components
+- **Tool confirmations**: Update the confirmation dialogs
+- **New controls**: Add buttons or inputs to the header
 
-### Example Use Cases
+### Using Different AI Models
 
-1. **Customer Support Agent**
-   - Add tools for:
-     - Ticket creation/lookup
-     - Order status checking
-     - Product recommendations
-     - FAQ database search
+The agent uses OpenAI by default, but you can switch to other providers:
 
-2. **Development Assistant**
-   - Integrate tools for:
-     - Code linting
-     - Git operations
-     - Documentation search
-     - Dependency checking
+#### Cloudflare Workers AI
 
-3. **Data Analysis Assistant**
-   - Build tools for:
-     - Database querying
-     - Data visualization
-     - Statistical analysis
-     - Report generation
+1. **Install the provider**:
 
-4. **Personal Productivity Assistant**
-   - Implement tools for:
-     - Task scheduling with flexible timing options
-     - One-time, delayed, and recurring task management
-     - Task tracking with reminders
-     - Email drafting
-     - Note taking
+   ```bash
+   npm install workers-ai-provider
+   ```
 
-5. **Scheduling Assistant**
-   - Build tools for:
-     - One-time event scheduling using specific dates
-     - Delayed task execution (e.g., "remind me in 30 minutes")
-     - Recurring tasks using cron patterns
-     - Task payload management
-     - Flexible scheduling patterns
+2. **Add AI binding** to `wrangler.jsonc`:
 
-Each use case can be implemented by:
+   ```jsonc
+   {
+     "ai": {
+       "binding": "AI"
+     }
+   }
+   ```
 
-1. Adding relevant tools in `tools.ts`
-2. Customizing the UI for specific interactions
-3. Extending the agent's capabilities in `server.ts`
-4. Adding any necessary external API integrations
+3. **Update server.ts**:
 
-## Learn More
+   ```typescript
+   import { createWorkersAI } from "workers-ai-provider";
 
-- [`agents`](https://github.com/cloudflare/agents/blob/main/packages/agents/README.md)
-- [Cloudflare Agents Documentation](https://developers.cloudflare.com/agents/)
-- [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
+   const workersai = createWorkersAI({ binding: env.AI });
+   const model = workersai("@cf/deepseek-ai/deepseek-r1-distill-qwen-32b");
+   ```
 
-## License
+#### Anthropic Claude
 
-MIT
+1. **Install the provider**:
+
+   ```bash
+   npm install @ai-sdk/anthropic
+   ```
+
+2. **Update server.ts**:
+
+   ```typescript
+   import { anthropic } from "@ai-sdk/anthropic";
+
+   const model = anthropic("claude-3-5-sonnet-20241022");
+   ```
+
+## 🎯 Example Use Cases
+
+### 1. **Travel Agency Assistant**
+
+- Complete vacation planning with hotels, flights, and activities
+- Budget optimization and price comparison
+- Real-time availability checking
+- Booking confirmations and modifications
+
+### 2. **Event Planning Assistant**
+
+- Venue search and booking
+- Catering and entertainment options
+- Guest accommodation recommendations
+- Transportation and logistics
+
+### 3. **Business Travel Coordinator**
+
+- Corporate hotel and flight booking
+- Meeting room reservations
+- Expense tracking and reporting
+- Travel policy compliance
+
+### 4. **Adventure Travel Specialist**
+
+- Outdoor activity recommendations
+- Equipment rental and guides
+- Safety and weather considerations
+- Group booking coordination
+
+### 5. **Luxury Travel Concierge**
+
+- High-end hotel and resort selection
+- Private transportation and tours
+- Exclusive experiences and dining
+- Personalized itinerary creation
+
+## 📚 Additional Resources
+
+- **[Cloudflare Agents Documentation](https://developers.cloudflare.com/agents/)**
+- **[Browserbase MCP Documentation](https://mcpservers.org/servers/browserbase/mcp-server-browserbase)**
+- **[AI SDK Documentation](https://sdk.vercel.ai/docs/introduction)**
+- **[Smithery MCP Hosting](https://smithery.ai)**
+
+## 🚀 Deployment Options
+
+### Cloudflare Workers (Recommended)
+
+- **One-click deploy**: Use the deploy button above
+- **Custom domain**: Add your own domain in Cloudflare dashboard
+- **Global edge**: Fast responses worldwide
+- **Automatic scaling**: Handles traffic spikes automatically
+
+### Other Platforms
+
+- **Vercel**: Deploy as a serverless function
+- **Netlify**: Use Netlify Functions
+- **Railway**: Deploy with persistent storage
+- **Render**: Full-stack deployment
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **Cloudflare** for the amazing Workers platform
+- **Browserbase** for web scraping capabilities
+- **Smithery** for MCP hosting
+- **OpenAI** for AI capabilities
+- **Vercel AI SDK** for the excellent AI integration
+
+---
+
+**Happy vacation planning! 🏖️✈️🏨**

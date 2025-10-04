@@ -16,6 +16,10 @@ import {
 import { openai } from "@ai-sdk/openai";
 import { processToolCalls, cleanupMessages } from "./utils";
 import { tools, executions } from "./tools";
+import { hotelTools } from "./workers/hotel-worker";
+import { flightTools } from "./workers/flight-worker";
+import { activitiesTools } from "./workers/activities-worker";
+import { getMCPConfig } from "./mcp-config";
 // import { env } from "cloudflare:workers";
 
 const model = openai("gpt-4o-2024-11-20");
@@ -26,7 +30,7 @@ const model = openai("gpt-4o-2024-11-20");
 // });
 
 /**
- * Chat Agent implementation that handles real-time AI chat interactions
+ * Vacation Planning Agent implementation that coordinates between specialized workers
  */
 export class Chat extends AIChatAgent<Env> {
   /**
@@ -36,13 +40,26 @@ export class Chat extends AIChatAgent<Env> {
     onFinish: StreamTextOnFinishCallback<ToolSet>,
     _options?: { abortSignal?: AbortSignal }
   ) {
-    // const mcpConnection = await this.mcp.connect(
-    //   "https://path-to-mcp-server/sse"
-    // );
+    // Connect to Browserbase MCP server for web scraping
+    let mcpConnection = null;
+    try {
+      const mcpConfig = getMCPConfig('production');
+      mcpConnection = await this.mcp.connect(mcpConfig.server.url);
+      console.log("✅ Connected to Browserbase MCP server");
+    } catch (error) {
+      console.warn("⚠️ MCP connection failed, using mock data:", error);
+      // Continue with mock data if MCP connection fails
+    }
 
-    // Collect all tools, including MCP tools
+    // Pass MCP connection info to tools for enhanced functionality
+    const mcpAvailable = mcpConnection !== null;
+
+    // Collect all tools from specialized workers and MCP
     const allTools = {
       ...tools,
+      ...hotelTools,
+      ...flightTools,
+      ...activitiesTools,
       ...this.mcp.getAITools()
     };
 
@@ -61,7 +78,24 @@ export class Chat extends AIChatAgent<Env> {
         });
 
         const result = streamText({
-          system: `You are a helpful assistant that can do various tasks... 
+          system: `You are a specialized vacation planning agent that helps users plan their trips by coordinating between three specialized workers:
+
+1. **Hotel Worker**: Searches for and finds hotels using web scraping via Browserbase MCP
+2. **Flight Worker**: Searches for and finds flights using web scraping via Browserbase MCP  
+3. **Activities Worker**: Searches for and finds things to do and attractions using web scraping via Browserbase MCP
+
+Your role is to:
+- Understand the user's vacation requirements (destination, dates, budget, preferences)
+- Coordinate searches across all three workers to find the best options
+- Present comprehensive vacation plans with hotels, flights, and activities
+- Help users compare options and make decisions
+- Provide detailed information about each recommendation
+
+When a user asks about vacation planning:
+1. First gather their requirements (destination, dates, budget, group size, interests)
+2. Use the appropriate worker tools to search for options
+3. Present a comprehensive plan with multiple options
+4. Help them refine their choices based on their preferences
 
 ${getSchedulePrompt({ date: new Date() })}
 

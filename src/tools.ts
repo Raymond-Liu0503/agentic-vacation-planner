@@ -109,6 +109,62 @@ const cancelScheduledTask = tool({
 });
 
 /**
+ * Comprehensive vacation planning tool that coordinates all workers
+ */
+const planVacation = tool({
+  description: "Plan a complete vacation by coordinating hotel, flight, and activity searches",
+  inputSchema: z.object({
+    destination: z.string().describe("Destination city or country"),
+    departureDate: z.string().describe("Departure date (YYYY-MM-DD)"),
+    returnDate: z.string().describe("Return date (YYYY-MM-DD)"),
+    origin: z.string().describe("Origin city or airport code"),
+    passengers: z.number().describe("Number of passengers"),
+    rooms: z.number().describe("Number of hotel rooms needed"),
+    budget: z.object({
+      total: z.number().describe("Total budget for the trip"),
+      hotel: z.number().optional().describe("Hotel budget per night"),
+      flights: z.number().optional().describe("Flight budget per person"),
+      activities: z.number().optional().describe("Activities budget per day")
+    }).describe("Budget breakdown"),
+    interests: z.array(z.string()).describe("Travel interests (e.g., 'culture', 'food', 'adventure', 'nature')"),
+    preferences: z.object({
+      hotel: z.array(z.string()).optional().describe("Hotel preferences (e.g., 'pool', 'spa', 'breakfast')"),
+      flight: z.array(z.string()).optional().describe("Flight preferences (e.g., 'direct', 'morning', 'window seat')"),
+      activities: z.array(z.string()).optional().describe("Activity preferences (e.g., 'outdoor', 'indoor', 'family-friendly')")
+    }).optional().describe("Specific preferences for each category")
+  }),
+  execute: async (params) => {
+    try {
+      // This would coordinate between all three workers
+      // For now, return a structured response
+      return {
+        success: true,
+        message: `Vacation planning initiated for ${params.destination} from ${params.departureDate} to ${params.returnDate}`,
+        plan: {
+          destination: params.destination,
+          dates: {
+            departure: params.departureDate,
+            return: params.returnDate
+          },
+          budget: params.budget,
+          nextSteps: [
+            "Searching for flights...",
+            "Searching for hotels...", 
+            "Searching for activities...",
+            "Compiling recommendations..."
+          ]
+        }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error"
+      };
+    }
+  }
+});
+
+/**
  * Export all available tools
  * These will be provided to the AI model to describe available capabilities
  */
@@ -117,7 +173,8 @@ export const tools = {
   getLocalTime,
   scheduleTask,
   getScheduledTasks,
-  cancelScheduledTask
+  cancelScheduledTask,
+  planVacation
 } satisfies ToolSet;
 
 /**
